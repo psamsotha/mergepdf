@@ -1,4 +1,6 @@
-package com.peeskillet.mergepdf;
+package com.peeskillet.mergepdf.test;
+
+import com.peeskillet.mergepdf.Main;
 
 public class TestRunner {
 

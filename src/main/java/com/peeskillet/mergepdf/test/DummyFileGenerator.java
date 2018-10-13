@@ -1,4 +1,4 @@
-package com.peeskillet.mergepdf;
+package com.peeskillet.mergepdf.test;
 
 import java.io.File;
 import java.io.FileOutputStream;
