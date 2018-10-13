@@ -47,14 +47,16 @@ public class Main {
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
             if ("-o".equals(arg)) {
-                if (i + 1 != args.length) {
-                    String outputFile = args[i + 1];
-                    arguments.setOutputFile(outputFile);
-                    i++;
-                } else {
+                String outputFile = null;
+                try {
+                    outputFile = args[i + 1];
+                } catch (ArrayIndexOutOfBoundsException ex) {
+                    System.out.println("No output file entered.");
                     printUsage();
-                    System.exit(0);
+                    System.exit(1);
                 }
+                arguments.setOutputFile(outputFile);
+                i++;
             } else if ("-v".equals(arg)) {
                 arguments.addFlag(arg);
             } else {
