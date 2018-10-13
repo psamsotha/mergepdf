@@ -15,6 +15,12 @@ this, you will be able to use the command from anywhere
 
     mergepdf file1.pdf file2.pdf file3.pdf -o output.pdf
     
+Directories can also be listed. If a directory is listed, the files
+in the directory will traversed alphabetically first, and then any other
+directories in that directory will be recursively traversed. If you want
+to list a directory, the best thing to do would be to rename the files
+prefixed with numbers so that you can get the correct ordering.
+    
 ### Manual Testing
 
 There is a `DummyFileGenerator` and a `TestRunner` class. First run the

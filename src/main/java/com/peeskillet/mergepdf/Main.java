@@ -38,7 +38,7 @@ public class Main {
         mergeFiles(arguments.getInputFilesAsArray(), arguments.getOutputFile(), true);
 
         if (arguments.hasFlag("-v")) {
-            printMergedFiles(arguments.getInputFiles());
+            printMergedFiles(arguments.getInputFiles(), arguments.getOutputFile());
         }
     }
 
@@ -58,10 +58,54 @@ public class Main {
             } else if ("-v".equals(arg)) {
                 arguments.addFlag(arg);
             } else {
-                arguments.addInputFile(arg);
+                File file = checkFile(arg);
+                if (file.isDirectory()) {
+                    extractDirectory(arguments.getInputFiles(), file);
+                } else {
+                    arguments.addInputFile(file.getAbsolutePath());
+                }
             }
         }
         return arguments;
+    }
+
+    private static File checkFile(String fileName) {
+        File file = new File(fileName);
+        if (!file.exists()) {
+            throw new IllegalArgumentException(fileName + " does not exist.");
+        }
+        return file;
+    }
+
+    /**
+     * When a directory is listed, the directory will be traversed alphabetically
+     * and recursively. Files are added first, then directories are traversed
+     * recursively.
+     *
+     * @param fileNames the list of file names to merge.
+     * @param file the directory File
+     */
+    private static void extractDirectory(List<String> fileNames, File file) {
+        if (file.isDirectory()) {
+            File[] files = file.listFiles();
+            Arrays.sort(files);
+
+            List<File> directories = new ArrayList<>();
+
+            for (File f: files) {
+                if (f.isDirectory()) {
+                    directories.add(f);
+                } else {
+                    fileNames.add(f.getAbsolutePath());
+                }
+            }
+
+            for (File dir: directories) {
+                extractDirectory(fileNames, dir);
+            }
+        } else {
+            fileNames.add(file.getAbsolutePath());
+        }
     }
 
     private static void mergeFiles(String[] files, String result, boolean smart) throws Exception {
@@ -104,11 +148,12 @@ public class Main {
         System.out.println("Usage: mergepdf file1.pdf file2.pdf -o output.pdf");
     }
 
-    private static void printMergedFiles(List<String> files) {
+    private static void printMergedFiles(List<String> files, String outputFile) {
         System.out.println("Merged files:");
-        for (String file: files) {
-            System.out.println("\t" + file);
+        for (int i = 1; i <= files.size(); i++) {
+            System.out.println(String.format("  %d. %s", i, files.get(i - 1)));
         }
+        System.out.println("Output: " + outputFile);
     }
 
     private static class Arguments {

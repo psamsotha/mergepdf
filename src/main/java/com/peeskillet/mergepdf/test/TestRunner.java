@@ -9,6 +9,7 @@ public class TestRunner {
                 "data/one.pdf",
                 "data/two.pdf",
                 "data/three.pdf",
+                "data/more",
                 "-o", "output/merged.pdf",
                 "-v"
         });

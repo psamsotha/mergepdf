@@ -16,6 +16,9 @@ public class DummyFileGenerator {
         createPdf("data/one.pdf", "ONE ONE ONE");
         createPdf("data/two.pdf", "TWO TWO TWO");
         createPdf("data/three.pdf", "THREE THREE THREE");
+        createPdf("data/more/four.pdf", "FOUR FOUR FOUR");
+        createPdf("data/more/five.pdf", "FIVE FIVE FIVE");
+        createPdf("data/more/six.pdf", "SIX SIX SIX");
     }
 
     private static void createPdf(String filename, String data) throws DocumentException, IOException {
