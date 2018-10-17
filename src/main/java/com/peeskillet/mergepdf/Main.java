@@ -147,7 +147,9 @@ public class Main {
     }
 
     private static void printUsage() {
-        System.out.println("Usage: mergepdf file1.pdf file2.pdf -o output.pdf");
+        System.out.println("Usage: mergepdf file1.pdf file2.pdf -o output.pdf [-v]" +
+                           "  -o  the output file" +
+                           "  -v  verbose output");
     }
 
     private static void printMergedFiles(List<String> files, String outputFile) {
