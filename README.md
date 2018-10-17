@@ -20,6 +20,12 @@ in the directory will traversed alphabetically first, and then any other
 directories in that directory will be recursively traversed. If you want
 to list a directory, the best thing to do would be to rename the files
 prefixed with numbers so that you can get the correct ordering.
+
+#### Options
+ 
+* `-o` - output file
+* `-v` - verbose output
+* `-h` - show usage
     
 ### Manual Testing
 

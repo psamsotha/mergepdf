@@ -1,7 +1,13 @@
 package com.peeskillet.mergepdf;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.DosFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -18,7 +24,7 @@ import com.itextpdf.text.pdf.PdfSmartCopy;
  * program are the input file names and an -o flag with the output
  * file name, e.g.
  *
- *     file1.pdf file2.pdf file3.pdf -o output.pdf
+ *     file1.pdf file2.pdf file3.pdf -o output.pdf [-v]
  */
 public class Main {
 
@@ -88,8 +94,11 @@ public class Main {
      * @param file the directory File
      */
     private static void extractDirectory(List<String> fileNames, File file) {
-        if (file.isDirectory()) {
-            File[] files = file.listFiles();
+        if (file.isDirectory()) { ;
+            File[] files = file.listFiles(getFileFilter());
+            if (files == null) {
+                throw new IllegalStateException("files must not be null.");
+            }
             Arrays.sort(files);
 
             List<File> directories = new ArrayList<>();
@@ -109,6 +118,30 @@ public class Main {
             fileNames.add(file.getAbsolutePath());
         }
     }
+
+    /**
+     * Get FileFilter to filter out hidden files. On Windows systems,
+     * also filter out system files.
+     */
+    private static FileFilter getFileFilter() {
+        if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+            // see https://stackoverflow.com/a/15646429/2587435
+            return (File f) -> {
+                Path path = Paths.get(f.getAbsolutePath());
+                DosFileAttributes dfa;
+                try {
+                    dfa = Files.readAttributes(path, DosFileAttributes.class);
+                } catch (IOException e) {
+                    // bad practice
+                    return false;
+                }
+                return (!dfa.isHidden() && !dfa.isSystem());
+            };
+        } else {
+            return (File file) -> !file.isHidden();
+        }
+    }
+
 
     private static void mergeFiles(String[] files, String result, boolean smart) throws Exception {
         Document document = new Document();
