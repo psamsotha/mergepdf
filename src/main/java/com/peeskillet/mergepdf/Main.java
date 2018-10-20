@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.StringJoiner;
 
 import com.itextpdf.text.Document;
 import com.itextpdf.text.pdf.PdfCopy;
@@ -24,9 +25,18 @@ import com.itextpdf.text.pdf.PdfSmartCopy;
  * program are the input file names and an -o flag with the output
  * file name, e.g.
  *
- *     file1.pdf file2.pdf file3.pdf -o output.pdf [-v]
+ *     file1.pdf file2.pdf file3.pdf -o output.pdf [-e] [-v]
+ *
+ * Flags:
+ *  * -v  verbose
+ *  * -e  include only files with pdf extension
  */
 public class Main {
+
+    private static final List<String> FLAGS = Arrays.asList(
+            "-v",      // verbose output
+            "-e"       // only include files with .pdf extension
+    );
 
     public static void main(String[] args) throws Exception {
         if ("-h".equals(args[0]) || "--help".equals(args[0])) {
@@ -50,6 +60,13 @@ public class Main {
 
     private static Arguments extractArguments(String[] args) {
         Arguments arguments = new Arguments();
+        // extract flags first as some processing
+        // depends on some flags
+        for (String arg : args) {
+            if (FLAGS.contains(arg)) {
+                arguments.addFlag(arg);
+            }
+        }
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
             if ("-o".equals(arg)) {
@@ -63,12 +80,10 @@ public class Main {
                 }
                 arguments.setOutputFile(outputFile);
                 i++;
-            } else if ("-v".equals(arg)) {
-                arguments.addFlag(arg);
-            } else {
+            } else if (!FLAGS.contains(arg)) {
                 File file = checkFile(arg);
                 if (file.isDirectory()) {
-                    extractDirectory(arguments.getInputFiles(), file);
+                    extractDirectory(arguments.getInputFiles(), file, arguments);
                 } else {
                     arguments.addInputFile(file.getAbsolutePath());
                 }
@@ -93,9 +108,9 @@ public class Main {
      * @param fileNames the list of file names to merge.
      * @param file the directory File
      */
-    private static void extractDirectory(List<String> fileNames, File file) {
-        if (file.isDirectory()) { ;
-            File[] files = file.listFiles(getFileFilter());
+    private static void extractDirectory(List<String> fileNames, File file, Arguments arguments) {
+        if (file.isDirectory()) {
+            File[] files = file.listFiles(getFileFilter(arguments.hasFlag("-e")));
             if (files == null) {
                 throw new IllegalStateException("files must not be null.");
             }
@@ -112,7 +127,7 @@ public class Main {
             }
 
             for (File dir: directories) {
-                extractDirectory(fileNames, dir);
+                extractDirectory(fileNames, dir, arguments);
             }
         } else {
             fileNames.add(file.getAbsolutePath());
@@ -123,7 +138,7 @@ public class Main {
      * Get FileFilter to filter out hidden files. On Windows systems,
      * also filter out system files.
      */
-    private static FileFilter getFileFilter() {
+    private static FileFilter getFileFilter(boolean onlyFilesWithPdfExtension) {
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
             // see https://stackoverflow.com/a/15646429/2587435
             return (File f) -> {
@@ -135,10 +150,14 @@ public class Main {
                     // bad practice
                     return false;
                 }
-                return (!dfa.isHidden() && !dfa.isSystem());
+                return onlyFilesWithPdfExtension
+                        ? (!dfa.isHidden() && !dfa.isSystem() && path.endsWith(".pdf"))
+                        : (!dfa.isHidden() && !dfa.isSystem());
             };
         } else {
-            return (File file) -> !file.isHidden();
+            return (File file) -> onlyFilesWithPdfExtension
+                ? (!file.isHidden() && file.getName().endsWith(".pdf"))
+                : !file.isHidden();
         }
     }
 
@@ -182,6 +201,7 @@ public class Main {
     private static void printUsage() {
         System.out.println("Usage: mergepdf file1.pdf file2.pdf -o output.pdf [-v]" +
                            "  -o  the output file" +
+                           "  -e  only .pdf extension files" +
                            "  -v  verbose output");
     }
 
@@ -230,9 +250,17 @@ public class Main {
 
         @Override
         public String toString() {
-            return "Arguments {\n" +
-                    "  outputFile='" + outputFile + '\'' +
-                    ",\n  inputFiles=" + Arrays.toString(inputFiles.toArray()) +
+            StringJoiner inputList = new StringJoiner(System.lineSeparator());
+            StringBuilder blanksSb = new StringBuilder();
+            for (int i = 0; i < "inputFiles=".length(); i++) {
+                blanksSb.append(" ");
+            }
+            String blanks = blanksSb.toString();
+            inputFiles.forEach(input -> inputList.add(blanks + input));
+            return "Arguments {" +
+                    "\n  outputFile='" + outputFile + '\'' +
+                    ",\n  inputFiles=" + inputList.toString() +
+                    ",\n  flags=" + flags +
                     "\n}";
         }
     }
