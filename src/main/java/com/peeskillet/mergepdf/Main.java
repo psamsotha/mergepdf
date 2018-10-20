@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.logging.Logger;
 
 import com.itextpdf.text.Document;
 import com.itextpdf.text.pdf.PdfCopy;
@@ -28,12 +29,16 @@ import com.itextpdf.text.pdf.PdfSmartCopy;
  *     file1.pdf file2.pdf file3.pdf -o output.pdf [-e] [-v]
  *
  * Flags:
+ *  * -v  help (show usage)
  *  * -v  verbose
  *  * -e  include only files with pdf extension
  */
 public class Main {
 
+    private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
+
     private static final List<String> FLAGS = Arrays.asList(
+            "-h",       // show usage
             "-v",      // verbose output
             "-e"       // only include files with .pdf extension
     );
@@ -49,6 +54,11 @@ public class Main {
         }
 
         Arguments arguments = extractArguments(args);
+
+        if (arguments.hasFlag("-v")) {
+            LOGGER.info(arguments.toString());
+        }
+       //  System.out.println(arguments);
 
         makeOutputDirectoriesIfNeeded(arguments.getOutputFile());
         mergeFiles(arguments.getInputFilesAsArray(), arguments.getOutputFile(), true);
@@ -206,11 +216,13 @@ public class Main {
     }
 
     private static void printMergedFiles(List<String> files, String outputFile) {
-        System.out.println("Merged files:");
+        StringBuilder sb = new StringBuilder();
+        sb.append("Merged files:").append(System.lineSeparator());
         for (int i = 1; i <= files.size(); i++) {
-            System.out.println(String.format("  %d. %s", i, files.get(i - 1)));
+            sb.append(String.format("  %d. %s%n", i, files.get(i - 1)));
         }
-        System.out.println("Output: " + outputFile);
+        sb.append("Output: ").append(outputFile);
+        LOGGER.info(sb.toString());
     }
 
     private static class Arguments {
@@ -252,15 +264,17 @@ public class Main {
         public String toString() {
             StringJoiner inputList = new StringJoiner(System.lineSeparator());
             StringBuilder blanksSb = new StringBuilder();
-            for (int i = 0; i < "inputFiles=".length(); i++) {
+            for (int i = 0; i < "  inputFiles=".length(); i++) {
                 blanksSb.append(" ");
             }
             String blanks = blanksSb.toString();
-            inputFiles.forEach(input -> inputList.add(blanks + input));
+            inputList.add(inputFiles.get(0));
+            inputFiles.stream().skip(1)
+                    .forEach(input -> inputList.add(blanks + input));
             return "Arguments {" +
-                    "\n  outputFile='" + outputFile + '\'' +
+                    "\n  flags=" + flags +
+                    "\n  outputFile=" + outputFile +
                     ",\n  inputFiles=" + inputList.toString() +
-                    ",\n  flags=" + flags +
                     "\n}";
         }
     }
